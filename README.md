@@ -36,9 +36,10 @@ npm run build
 
 - Equipo: `jhomars-projects`
 - Proyecto: `leaderboard-platanus-woki-2026`
-- Repositorio: `asther0/leaderboard-platanus-hack-2026`
+- Repositorio: `crafter-station/leaderboard-platanus-hack-2026`
 - Root Directory: `site`
 - Rama de producción: `main`
+- Producción: <https://platanus-2026.crafter.run/>
 - Web Analytics se integra con `@vercel/analytics/next`.
 
 El repositorio está conectado a Vercel. Cada push a `main` genera un despliegue de producción; las demás ramas generan previews. También se puede desplegar con la CLI desde la raíz del repositorio.
