@@ -34,15 +34,17 @@ npm run build
 
 ## Vercel
 
-- Equipo: `jhomars-projects`
-- Proyecto: `leaderboard-platanus-woki-2026`
+- Equipo: `crafter-station`
+- Proyecto: `platanus`
 - Repositorio: `crafter-station/leaderboard-platanus-hack-2026`
 - Root Directory: `site`
 - Rama de producción: `main`
 - Producción: <https://platanus-2026.crafter.run/>
 - Web Analytics se integra con `@vercel/analytics/next`.
 
-El repositorio está conectado a Vercel. Cada push a `main` genera un despliegue de producción; las demás ramas generan previews. También se puede desplegar con la CLI desde la raíz del repositorio.
+El repositorio está conectado a Vercel. Cada push a `main` genera un despliegue de producción; las demás ramas generan previews. También se puede desplegar con la CLI desde `site/`.
+
+El subdominio `platanus-2026.crafter.run` se gestiona con la CLI `crafters` (`crafters domain add`), que combina el token de Vercel del equipo con el DNS de `crafter.run` en Spaceship.
 
 El favicon es el logo original publicado por WOKI en Platanus. `.gstack/` contiene artefactos locales de revisión y no se publica en Git.
 
