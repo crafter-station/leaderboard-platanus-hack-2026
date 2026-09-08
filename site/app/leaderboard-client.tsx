@@ -129,7 +129,8 @@ export function LeaderboardClient({
       }));
       current.current = next;
       setData(next);
-      setChanges(deltas);
+      // Keep each project's last movement through polls with no new votes.
+      setChanges((previous) => ({ ...previous, ...deltas }));
       setError(null);
       setAge(
         Math.max(
@@ -220,10 +221,6 @@ export function LeaderboardClient({
     : null;
   const rankGain =
     wokiRank !== null && originalRank !== null ? originalRank - wokiRank : 0;
-  const sessionGain =
-    woki?.votes != null && originalWoki?.votes != null
-      ? woki.votes - originalWoki.votes
-      : 0;
   const nextProject =
     woki?.votes != null
       ? [...data.projects]
@@ -329,68 +326,71 @@ export function LeaderboardClient({
             </span>
           </div>
         </div>
-        <div className="woki-stat">
-          <span className="eyebrow">
-            POSICIÓN{uncertain ? ' ESTIMADA' : ''}
-          </span>
-          <strong
-            key={wokiRank}
-            className={reception?.rankUp ? 'number-change' : ''}
-          >
-            {wokiRank !== null ? `#${wokiRank}` : '—'}
-          </strong>
-          <span className="stat-note">
-            {rankGain ? (
-              <>
-                <span className={rankGain > 0 ? 'positive' : 'negative'}>
-                  {rankGain > 0 ? '↑' : '↓'} {Math.abs(rankGain)}{' '}
-                  {Math.abs(rankGain) === 1 ? 'puesto' : 'puestos'}
-                </span>{' '}
-                esta sesión
-              </>
-            ) : (
-              `de ${data.projects.length} proyectos`
-            )}
-          </span>
-        </div>
-        <div className="woki-stat">
-          <span className="eyebrow">
-            VOTOS{woki?.stale ? ' ANTERIORES' : ''}
-          </span>
-          <strong
-            key={woki?.votes}
-            className={changes.woki ? 'number-change' : ''}
-          >
-            {woki?.votes ?? '—'}
-          </strong>
-          <span className="stat-note">
-            {sessionGain ? (
-              <>
-                <span className={sessionGain > 0 ? 'positive' : 'negative'}>
-                  {signed(sessionGain)}
-                </span>{' '}
-                desde que abriste
-              </>
-            ) : (
-              'Votos públicos'
-            )}
-          </span>
+        <div className="woki-metrics">
+          <div className="woki-stat">
+            <span className="eyebrow">
+              POSICIÓN{uncertain ? ' ESTIMADA' : ''}
+            </span>
+            <strong
+              key={wokiRank}
+              className={reception?.rankUp ? 'number-change' : ''}
+            >
+              {wokiRank !== null ? `#${wokiRank}` : '—'}
+            </strong>
+            <span className="stat-note">
+              {rankGain ? (
+                <>
+                  <span className={rankGain > 0 ? 'positive' : 'negative'}>
+                    {rankGain > 0 ? '↑' : '↓'} {Math.abs(rankGain)}{' '}
+                    {Math.abs(rankGain) === 1 ? 'puesto' : 'puestos'}
+                  </span>
+                </>
+              ) : (
+                `de ${data.projects.length} proyectos`
+              )}
+            </span>
+          </div>
+          {rankGain !== 0 && (
+            <p className="session-caption">Desde que abriste esta página</p>
+          )}
         </div>
         <div className="woki-target">
-          <p className="eyebrow">
-            {uncertain
-              ? 'LECTURA PENDIENTE'
-              : nextProject
-                ? 'SIGUIENTE OBJETIVO'
-                : 'EN LA CIMA'}
-          </p>
+          <div className="target-heading">
+            <p className="eyebrow">
+              {uncertain
+                ? 'LECTURA PENDIENTE'
+                : nextProject
+                  ? 'SIGUIENTE OBJETIVO'
+                  : 'EN LA CIMA'}
+            </p>
+            <a
+              className="text-link jump-link"
+              href="#project-woki"
+              onClick={() => {
+                const row = document.querySelector('#project-woki .woki-row');
+                row?.classList.remove('woki-located');
+                requestAnimationFrame(() => {
+                  requestAnimationFrame(() =>
+                    row?.classList.add('woki-located'),
+                  );
+                });
+              }}
+            >
+              <span>Ver WOKI en el ranking</span>{' '}
+              <ArrowDown size={14} aria-hidden="true" />
+            </a>
+          </div>
           <p className="target-copy">
             {uncertain ? (
               'Esperando una lectura completa.'
             ) : nextProject ? (
               <>
-                <strong>{gap}</strong> {gap === 1 ? 'voto para' : 'votos para'}{' '}
-                superar a <b>{nextProject.name}</b>
+                Faltan <strong>{gap}</strong> {gap === 1 ? 'voto' : 'votos'}{' '}
+                para alcanzar el{' '}
+                <strong>#{rankOf(data.projects, nextProject)}</strong>
+                <span className="target-project">
+                  Superar a <b>{nextProject.name}</b>
+                </span>
               </>
             ) : woki?.votes != null ? (
               'WOKI comparte o lidera el primer lugar.'
@@ -399,21 +399,18 @@ export function LeaderboardClient({
             )}
           </p>
           {nextProject && !uncertain && (
-            <progress
-              className="goal-track"
-              aria-label={`Votos de WOKI hacia superar a ${nextProject.name}`}
-              value={woki?.votes ?? 0}
-              max={(nextProject.votes ?? 0) + 1}
-            />
+            <div className="goal-progress">
+              <progress
+                className="goal-track"
+                aria-label={`Votos de WOKI hacia superar a ${nextProject.name}`}
+                value={woki?.votes ?? 0}
+                max={(nextProject.votes ?? 0) + 1}
+              />
+              <span className="goal-caption">
+                {woki?.votes ?? 0} / {(nextProject.votes ?? 0) + 1} votos
+              </span>
+            </div>
           )}
-          <a
-            className="text-link jump-link"
-            href="#project-woki"
-            aria-label="Ubicar WOKI en la tabla"
-          >
-            <span>Ubicar en la tabla</span>{' '}
-            <ArrowDown size={14} aria-hidden="true" />
-          </a>
         </div>
       </section>
 
@@ -489,7 +486,7 @@ export function LeaderboardClient({
                   href={`${SOURCE_URL}/${project.slug}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  aria-label={`${project.name}, ${rank !== null ? `posición ${rank}${tied ? ' compartida' : ''}` : 'posición pendiente'}, ${project.votes ?? 'sin lectura de'} votos${project.stale ? ', lectura anterior' : ''}. Abrir en Platanus en otra pestaña.`}
+                  aria-label={`${project.name}, ${rank !== null ? `posición ${rank}${tied ? ' compartida' : ''}` : 'posición pendiente'}, ${project.votes ?? 'sin lectura de'} votos${project.stale ? ', lectura anterior' : delta ? `, último cambio: ${signed(delta)} votos` : ''}. Abrir en Platanus en otra pestaña.`}
                 >
                   <span
                     className={`rank ${rank && rank <= 3 ? `podium-${rank}` : ''}`}
@@ -501,7 +498,16 @@ export function LeaderboardClient({
                     <span className="project-name">
                       {project.name}
                       {project.isWoki && (
-                        <span className="woki-badge">WOKI TEAM</span>
+                        <span className="woki-badge">
+                          <Image
+                            src="/crafter-station-icon-light.webp"
+                            alt=""
+                            width={12}
+                            height={12}
+                            className="crafter-team-icon"
+                          />
+                          CRAFTER TEAM
+                        </span>
                       )}
                     </span>
                     <span className="project-summary">{project.summary}</span>
@@ -517,15 +523,20 @@ export function LeaderboardClient({
                     </span>
                     <span
                       className={`vote-detail ${project.stale ? 'stale-count' : delta && delta < 0 ? 'negative' : 'positive'}`}
+                      title={
+                        !project.stale && delta
+                          ? `Último cambio: ${signed(delta)} votos`
+                          : undefined
+                      }
                     >
                       {project.stale ? (
                         'anterior'
                       ) : delta ? (
                         <>
                           {delta > 0 ? (
-                            <ArrowUp size={12} />
+                            <ArrowUp size={12} aria-hidden="true" />
                           ) : (
-                            <ArrowDown size={12} />
+                            <ArrowDown size={12} aria-hidden="true" />
                           )}
                           {signed(delta)}
                         </>
